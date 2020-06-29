@@ -30,7 +30,7 @@ const autoScroll = async (page) => {
     });
 }
 
-const run = async (url) => {
+const run = async (url, timestamp) => {
     const browser = await puppeteer.launch({ headless: true })
     const page = await browser.newPage()
     await page.setCacheEnabled(false);
@@ -69,11 +69,10 @@ const run = async (url) => {
             let singleUnusedBytes = ((100 - (singleUsedBytes / entry.text.length * 100)) / 100).toFixed(3);
             if (decimal_separator == "comma") {
                 singleUnusedBytes = singleUnusedBytes.replace(".", ",");
-                // singleUnusedBytes = (singleUnusedBytes / 100).toFixed(3).replace(".", ",");
             }
             //console.log(singleBytes.toFixed(1) + '% used in ' + entry.url)
             //Write csv
-            await fs.appendFile('results/' + projectname + '/data.csv', url + '\t' + entry.url + '\t' + singleUnusedBytes + '\r\n', function (err) {
+            await fs.appendFile('results/' + projectname + `/${timestamp}-data.csv`, url + '\t' + entry.url + '\t' + singleUnusedBytes + '\r\n', function (err) {
                 if (err) throw err;
             });
         }
@@ -86,17 +85,19 @@ const run = async (url) => {
 //Start
 const start = async () => {
 
+    let timestamp = new Date().getTime();
+
     //Generate output file
     await fs.promises.mkdir('results/' + projectname, { recursive: true })
-    if (!fs.existsSync('results/' + projectname + '/data.csv')) {
-        await fs.appendFile('results/' + projectname + '/data.csv', 'url\tasset url\t% unused\r\n', function (err) {
+    if (!fs.existsSync('results/' + projectname + `/${timestamp}-data.csv`)) {
+        await fs.appendFile('results/' + projectname + `/${timestamp}-data.csv`, 'url\tasset url\t% unused\r\n', function (err) {
             if (err) throw err;
         });
     }
 
     //Look URL array
     for (let i = 0; i < urlToTest.length; i++) {
-        await run(urlToTest[i])
+        await run(urlToTest[i], timestamp)
     }
 }
 
