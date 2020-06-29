@@ -1,27 +1,13 @@
 const puppeteer = require('puppeteer')
 const fs = require("fs");
 
-const projectname = "blick3"
+const decimal_separator = "comma"; // [comma/dot]
+const projectname = "cobi"
 const urlToTest = [
-    "https://www.blick.ch/",
-    "https://www.blick.ch/news/politik/krisengipfel-in-bern-wer-stoppt-die-corona-idioten-id15961017.html",
-    "https://www.blick.ch/news/schweiz/aktuelle-news-zum-coronavirus-ticker-zum-sars-aehnlichen-virus-aus-china-id15715896.html",
-    "https://www.blick.ch/news/partygaenger-unbesorgt-trotz-superspreader-ich-habe-keine-angst-vor-dem-corona-virus-id15960405.html",
-    "https://www.blick.ch/sport/fussball/nati/ihre-vision-soll-weiterleben-heute-ist-ismailis-24-todestag-freundinnen-ehren-sie-id15960728.html",
-    "https://www.blick.ch/news/mega-party-ohne-ruecksicht-auf-corona-berner-polizei-laesst-illegale-partygaenger-raven-id15960847.html",
-    "https://www.blick.ch/news/",
-    "https://www.blick.ch/services/webarchiv/",
-    "https://www.blick.ch/dossiers/",
-    "https://www.blick.ch/dossiers/adele/",
-    "https://www.blick.ch/news/raumfahrt-start-von-vega-rakete-wegen-unwetters-erneut-verschoben-id15960910.html",
-    "https://www.blick.ch/services/webarchiv/18_juni_2020/",
-    "https://www.blick.ch/life/reisen/ratgeber/",
-    "https://www.blick.ch/life/reisen/ch/wander-hotel-hopping-im-oberengadin-schwerelos-ueber-berge-und-blumen-id15944762.html",
-    "https://www.blick.ch/community/die-grosse-frage-wie-sieht-ihr-perfekter-sommertag-aus-id15959980.html",
-    "https://www.blick.ch/news/schweiz/schweizer-hunger-auf-billig-ware-fleisch-um-jeden-preis-id15959710.html",
-    "https://www.blick.ch/meinung/thema-der-woche/",
-    "https://www.blick.ch/sport/segeln/",
-    "https://www.blick.ch/digital/gadgets-technik/chinaschrott-oder-wish-schnaeppchen-handyhalterung-fuers-auto-kostet-nur-sechs-franken-id15959050.html"
+    "https://www.computerbild.de/",
+    "https://www.computerbild.de/news/",
+    "https://www.computerbild.de/artikel/avf-News-Fernseher-beste-Filme-Serien-Netflix-Amazon-Sky-25241351.html",
+    "https://www.computerbild.de/artikel/cb-Tests-Handy-Apple-iPhone-SE-iPhone-SE-2-Test-18570103.html"
 ]
 
 //Scroll to end of the page 
@@ -80,10 +66,14 @@ const run = async (url) => {
             }
 
             //Single css or js file data
-            let singleUnusedBytes = 100 - (singleUsedBytes / entry.text.length * 100)
+            let singleUnusedBytes = ((100 - (singleUsedBytes / entry.text.length * 100)) / 100).toFixed(3);
+            if (decimal_separator == "comma") {
+                singleUnusedBytes = singleUnusedBytes.replace(".", ",");
+                // singleUnusedBytes = (singleUnusedBytes / 100).toFixed(3).replace(".", ",");
+            }
             //console.log(singleBytes.toFixed(1) + '% used in ' + entry.url)
             //Write csv
-            await fs.appendFile('results/' + projectname + '/data.csv', url + ', ' + entry.url + ', ' + singleUnusedBytes.toFixed(1) + '\r\n', function (err) {
+            await fs.appendFile('results/' + projectname + '/data.csv', url + '\t' + entry.url + '\t' + singleUnusedBytes + '\r\n', function (err) {
                 if (err) throw err;
             });
         }
@@ -99,7 +89,7 @@ const start = async () => {
     //Generate output file
     await fs.promises.mkdir('results/' + projectname, { recursive: true })
     if (!fs.existsSync('results/' + projectname + '/data.csv')) {
-        await fs.appendFile('results/' + projectname + '/data.csv', 'url, asset url, % unused\r\n', function (err) {
+        await fs.appendFile('results/' + projectname + '/data.csv', 'url\tasset url\t% unused\r\n', function (err) {
             if (err) throw err;
         });
     }
