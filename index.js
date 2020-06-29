@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer')
 const fs = require("fs");
 
 const decimal_separator = "comma"; // [comma/dot]
+const device = "desktop"; // [desktop/mobile]
 const projectname = "cobi"
 const urlToTest = [
     "https://www.computerbild.de/",
@@ -30,14 +31,24 @@ const autoScroll = async (page) => {
     });
 }
 
-const run = async (url, timestamp) => {
-    const browser = await puppeteer.launch({ headless: true })
+const run = async (url, timestamp, device) => {
+    const browser = await puppeteer.launch({ headless: true, args: ['--window-size=1920,1080'] })
     const page = await browser.newPage()
     await page.setCacheEnabled(false);
-    await page.setViewport({
-        width: 1200,
-        height: 800
-    });
+
+    if (device == "mobile") {
+        page.setUserAgent('Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4168.3 Mobile Safari/537.36');
+        await page.setViewport({
+            width: 375,
+            height: 667
+        });
+    } else {
+        page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4168.3 Safari/537.36');
+        await page.setViewport({
+            width: 1920,
+            height: 1080
+        });
+    }
 
     await Promise.all([
         page.coverage.startJSCoverage(),
@@ -72,7 +83,7 @@ const run = async (url, timestamp) => {
             }
             //console.log(singleBytes.toFixed(1) + '% used in ' + entry.url)
             //Write csv
-            await fs.appendFile('results/' + projectname + `/${timestamp}-data.csv`, url + '\t' + entry.url + '\t' + singleUnusedBytes + '\r\n', function (err) {
+            await fs.appendFile('results/' + projectname + `/${timestamp}-${device}-data.csv`, url + '\t' + entry.url + '\t' + singleUnusedBytes + '\r\n', function (err) {
                 if (err) throw err;
             });
         }
@@ -89,15 +100,15 @@ const start = async () => {
 
     //Generate output file
     await fs.promises.mkdir('results/' + projectname, { recursive: true })
-    if (!fs.existsSync('results/' + projectname + `/${timestamp}-data.csv`)) {
-        await fs.appendFile('results/' + projectname + `/${timestamp}-data.csv`, 'url\tasset url\t% unused\r\n', function (err) {
+    if (!fs.existsSync('results/' + projectname + `/${timestamp}-${device}-data.csv`)) {
+        await fs.appendFile('results/' + projectname + `/${timestamp}-${device}-data.csv`, 'url\tasset url\t% unused\r\n', function (err) {
             if (err) throw err;
         });
     }
 
     //Look URL array
     for (let i = 0; i < urlToTest.length; i++) {
-        await run(urlToTest[i], timestamp)
+        await run(urlToTest[i], timestamp, device)
     }
 }
 
